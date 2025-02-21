@@ -5,7 +5,7 @@ GO
 USE VehiclePartsManagement;
 GO
 
--- Tabell för tillverkare
+-- Tabell fÃ¶r tillverkare
 CREATE TABLE Manufacturers (
     ManufacturerId INT PRIMARY KEY IDENTITY(1,1),
     Name NVARCHAR(100) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE Manufacturers (
 );
 GO
 
--- Tabell för fordonsmodeller
+-- Tabell fÃ¶r fordonsmodeller
 CREATE TABLE VehicleModels (
     ModelId INT PRIMARY KEY IDENTITY(1,1),
     ModelName NVARCHAR(100) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE VehicleModels (
 );
 GO
 
--- Tabell för kategorierna
+-- Tabell fÃ¶r kategorierna
 CREATE TABLE Categories (
     CategoryId INT PRIMARY KEY IDENTITY(1,1),
     ParentCategoryId INT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE Categories (
 );
 GO
 
--- Tabell för delar
+-- Tabell fÃ¶r delar
 CREATE TABLE Parts (
     PartId INT PRIMARY KEY IDENTITY(1,1),
     PartNumber NVARCHAR(50) UNIQUE,
@@ -49,7 +49,7 @@ CREATE TABLE Parts (
 );
 GO
 
--- Tabell för lager
+-- Tabell fÃ¶r lager
 CREATE TABLE Inventory (
     InventoryId INT PRIMARY KEY IDENTITY(1,1),
     PartId INT,
@@ -59,7 +59,7 @@ CREATE TABLE Inventory (
 );
 GO
 
--- Tabell för beställningar
+-- Tabell fÃ¶r bestÃ¤llningar
 CREATE TABLE Orders (
     OrderId INT PRIMARY KEY IDENTITY(1,1),
     OrderDate DATETIME DEFAULT GETDATE(),
@@ -68,7 +68,7 @@ CREATE TABLE Orders (
 );
 GO
 
--- Tabell för orderrader
+-- Tabell fÃ¶r orderrader
 CREATE TABLE OrderItems (
     OrderItemId INT PRIMARY KEY IDENTITY(1,1),
     OrderId INT,
@@ -84,7 +84,7 @@ GO
 	
 
 
--- Skapa tabell för delar (parts)
+-- Skapa tabell fÃ¶r delar (parts)
 CREATE TABLE parts (
     id INT PRIMARY KEY IDENTITY(1,1),
     part_number VARCHAR(50),
@@ -96,7 +96,7 @@ CREATE TABLE parts (
    
 );
 
--- Skapa tabell för lager (inventory)
+-- Skapa tabell fÃ¶r lager (inventory)
 CREATE TABLE inventory (
     id INT PRIMARY KEY IDENTITY(1,1),
     part_id INT,
@@ -171,3 +171,69 @@ VALUES
 SELECT COLUMN_NAME
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'parts';
+
+
+CREATE TABLE Cart (
+    CartId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+    PartId INT NOT NULL,
+    Quantity INT NOT NULL DEFAULT 1,
+    AddedDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+
+);
+
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Cart';
+
+SET IDENTITY_INSERT VehiclePartsManagement.dbo.Users ON;
+
+INSERT INTO VehiclePartsManagement.dbo.Users (UserId, Username, Email)
+VALUES 
+    (1, 'john_doe', 'john.doe@vehicleparts.com'),
+    (2, 'jane_smith', 'jane.smith@vehicleparts.com'),
+    (3, 'mike_brown', 'mike.brown@vehicleparts.com'),
+    (4, 'sarah_jones', 'sarah.jones@vehicleparts.com'),
+    (5, 'tom_wilson', 'tom.wilson@vehicleparts.com');
+
+SET IDENTITY_INSERT VehiclePartsManagement.dbo.Users OFF;
+
+CREATE TABLE Users (
+    UserId INT PRIMARY KEY IDENTITY(1,1),
+    Username NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(200) NOT NULL
+);
+CREATE INDEX IX_Cart_UserId ON Cart(UserId);
+CREATE INDEX IX_Cart_PartId ON Cart(PartId);
+
+-- Kontrollera om tabellen finns
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Cart')
+    PRINT 'Tabellen finns'
+ELSE
+    PRINT 'Tabellen finns inte';
+
+
+-- Skapa tabellen om den inte finns
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Cart')
+BEGIN
+CREATE TABLE Cart (
+    CartId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+    PartId INT NOT NULL,
+    Quantity INT NOT NULL DEFAULT 1,
+    AddedDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserId) REFERENCES Users(UserId),
+    FOREIGN KEY (PartId) REFERENCES Parts(PartId));
+END;
+-- Skapa Parts-tabellen om den inte finns
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Parts')
+BEGIN
+    CREATE TABLE Parts (
+        PartId INT PRIMARY KEY IDENTITY(1,1),
+        PartNumber NVARCHAR(50) UNIQUE,
+        Name NVARCHAR(200) NOT NULL,
+        BasePrice DECIMAL(10,2) NOT NULL,
+        CategoryId INT,
+        CompatibilityNotes NVARCHAR(MAX),
+        IsTireRimCompatible BIT DEFAULT 0
+    );
+END;
